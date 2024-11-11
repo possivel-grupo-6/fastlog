@@ -1,0 +1,8 @@
+fastapi
+pydantic
+boto3
+numpy
+pandas
+sqlalchemy
+uvicorn
+pymysql
