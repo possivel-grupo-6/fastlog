@@ -16,9 +16,6 @@ COPY frontend ./
 # Executa o build e exporta para estáticos
 RUN npm run build
 
-# Verifica se o diretório foi gerado corretamente (opcional para debug)
-RUN ls -l /app/out
-
 # Etapa 2: Configuração do Nginx
 FROM nginx:1.25
 
