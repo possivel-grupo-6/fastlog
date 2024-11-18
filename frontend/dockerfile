@@ -16,6 +16,9 @@ COPY frontend ./
 # Executa o build do aplicativo
 RUN npm run build
 
+# Adiciona um comando para validar a criação do diretório de saída
+RUN ls -l /app
+
 # Etapa 2: Configuração do Nginx para servir o frontend
 FROM nginx:1.25
 
@@ -26,7 +29,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY frontend/nginx.conf /etc/nginx/conf.d/
 
 # Copia a build gerada para o diretório servido pelo Nginx
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY --from=build-stage /app/out /usr/share/nginx/html
 
 # Expõe a porta 80
 EXPOSE 80
