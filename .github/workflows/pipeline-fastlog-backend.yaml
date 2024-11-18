@@ -1,4 +1,4 @@
-name: build frontend on dockerhub
+name: build backend on dockerhub
 
 on:
   workflow_dispatch:
