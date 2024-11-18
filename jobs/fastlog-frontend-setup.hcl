@@ -7,9 +7,9 @@ job "frontend" {
 
     task "frontend" {
       driver = "docker"
-
+      
       config {
-        image = "joaomiziaraspt/fastlog-frontend:latest"
+        image = "seu-usuario-dockerhub/seu-app-frontend:latest"
         port_map {
           http = 80
         }
@@ -18,8 +18,20 @@ job "frontend" {
       resources {
         network {
           port "http" {
-            static = 8080
+            static = 8081
           }
+        }
+      }
+
+      service {
+        name = "frontend-service"
+        port = "http"
+        
+        check {
+          type     = "http"
+          path     = "/"
+          interval = "10s"
+          timeout  = "2s"
         }
       }
     }
