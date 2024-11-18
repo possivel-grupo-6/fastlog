@@ -22,4 +22,5 @@ jobs:
 
       - name: Build and push Docker image
         run: |
+          ls frontend/
           docker build -f frontend/dockerfile -t ${{ secrets.DOCKER_USERNAME }}/fastlog-frontend:latest /
