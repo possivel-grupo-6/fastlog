@@ -1,23 +1,35 @@
+# Etapa 1: Build do frontend
 FROM node:18 AS build-stage
 
+# Define o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
-COPY package*.json ./
+# Copia o arquivo package.json e package-lock.json do diretório frontend
+COPY frontend/package*.json ./
 
+# Instala as dependências
 RUN npm install
 
-COPY . /app/
+# Copia o restante dos arquivos do projeto para o contêiner
+COPY frontend ./
 
+# Executa o build do aplicativo
 RUN npm run build
 
+# Etapa 2: Configuração do Nginx para servir o frontend
 FROM nginx:1.25
 
+# Remove a configuração padrão do Nginx
 RUN rm /etc/nginx/conf.d/default.conf
 
+# Copia o arquivo de configuração do Nginx
 COPY frontend/nginx.conf /etc/nginx/conf.d/
 
+# Copia a build gerada para o diretório servido pelo Nginx
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
+# Expõe a porta 80
 EXPOSE 80
 
+# Comando padrão para iniciar o Nginx
 CMD ["nginx", "-g", "daemon off;"]
