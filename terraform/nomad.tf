@@ -150,12 +150,44 @@ resource "aws_security_group" "clients_ingress" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     }
+      ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    }
   ingress {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+resource "aws_route_table" "nomad_route_table" {
+  vpc_id = aws_vpc.nomad_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.nomad_igw.id
+  }
+  tags = {
+    Name = "nomad-route-table"
+  }
+}
+
+resource "aws_route_table_association" "rt_assoc_subnet_1" {
+  subnet_id      = aws_subnet.nomad_subnet_1.id
+  route_table_id = aws_route_table.nomad_route_table.id
+}
+
+resource "aws_route_table_association" "rt_assoc_subnet_2" {
+  subnet_id      = aws_subnet.nomad_subnet_2.id
+  route_table_id = aws_route_table.nomad_route_table.id
+}
+
+resource "aws_route_table_association" "rt_assoc_subnet_3" {
+  subnet_id      = aws_subnet.nomad_subnet_3.id
+  route_table_id = aws_route_table.nomad_route_table.id
 }
 
 
@@ -213,6 +245,7 @@ resource "aws_instance" "server" {
   vpc_security_group_ids = [aws_security_group.nomad_ui_ingress.id, aws_security_group.ssh_ingress.id, aws_security_group.allow_all_internal.id]
   count                  = var.server_count
   iam_instance_profile   = "LabInstanceProfile"
+  associate_public_ip_address = true
   subnet_id = element(
     [aws_subnet.nomad_subnet_1.id, aws_subnet.nomad_subnet_2.id, aws_subnet.nomad_subnet_3.id],
     count.index
@@ -274,6 +307,8 @@ resource "aws_instance" "client" {
   vpc_security_group_ids = [aws_security_group.nomad_ui_ingress.id, aws_security_group.ssh_ingress.id, aws_security_group.clients_ingress.id, aws_security_group.allow_all_internal.id]
   count                  = var.client_count
   iam_instance_profile   = "LabInstanceProfile"
+  associate_public_ip_address = true
+
   subnet_id = element(
     [aws_subnet.nomad_subnet_1.id, aws_subnet.nomad_subnet_2.id, aws_subnet.nomad_subnet_3.id],
     count.index
