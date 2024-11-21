@@ -4,11 +4,11 @@ FROM node:18 AS build
 WORKDIR /app
 
 # Copia o package.json e instala as dependências
-COPY package*.json ./
+COPY ./frontend/package*.json ./
 RUN npm install
 
 # Copia o restante dos arquivos e gera a build
-COPY . ./
+COPY ./frontend ./
 RUN npm run build
 
 # Lista o conteúdo do diretório /app para garantir que o build tenha sido criado
