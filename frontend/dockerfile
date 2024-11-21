@@ -1,12 +1,14 @@
-# Usando uma imagem Node.js para build
+# Etapa de build
 FROM node:18 AS builder
 WORKDIR /app
-COPY ./frontend .
+COPY ./frontend . 
 RUN npm install && npm run build
-RUN ls -lt /app
 
-# Usando uma imagem leve para servir o conteúdo estático
+# Etapa final para servir o front-end
 FROM nginx:alpine
-COPY --from=builder /app/build /usr/share/nginx/html
+# Certifique-se de criar o diretório antes de copiar
+RUN mkdir -p /usr/share/nginx/html
+COPY --from=builder /app/.next /usr/share/nginx/html
+COPY --from=builder /app/public /usr/share/nginx/html/public
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
