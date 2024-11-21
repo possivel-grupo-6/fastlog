@@ -1,14 +1,17 @@
-job "frontend" {
-  datacenters = ["dc1"]
+job "fastlog-web" {
   type = "service"
 
-  group "frontend-group" {
+  group "ptc-web" {
     count = 1
-
     network {
-      port "http" {
-        static = 8080  # A porta do host onde o serviço será exposto
+      port "web" {
+        static = 8080
       }
+    }
+    service {
+      name     = "ptc-web-svc"
+      port     = "web"
+      provider = "nomad"
     }
 
     task "frontend" {
@@ -16,12 +19,7 @@ job "frontend" {
 
       config {
         image = "joaomiziaraspt/fastlog-frontend:latest"
-        ports = ["http"]  
-      }
-
-      resources {
-        cpu    = 500    # 500 MHz
-        memory = 256    # 256 MB
+        ports = ["web"]  
       }
     }
   }
