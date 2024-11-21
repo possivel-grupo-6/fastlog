@@ -6,6 +6,7 @@ RUN npm install && npm run build
 
 # Usando uma imagem leve para servir o conteúdo estático
 FROM nginx:alpine
+RUN ls -lt /app
 COPY --from=builder /app/build /usr/share/nginx/html
 EXPOSE 3000
 CMD ["nginx", "-g", "daemon off;"]
