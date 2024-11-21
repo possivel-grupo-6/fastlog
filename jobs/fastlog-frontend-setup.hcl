@@ -9,7 +9,7 @@ job "frontend" {
       driver = "docker"
       
       config {
-        image = "seu-usuario-dockerhub/seu-app-frontend:latest"
+        image = "joaomiziaraspt/fastlog-frontend:latest"
         port_map {
           http = 80
         }
@@ -18,7 +18,7 @@ job "frontend" {
       resources {
         network {
           port "http" {
-            static = 8081
+            static = 8080
           }
         }
       }
