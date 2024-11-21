@@ -7,10 +7,9 @@ WORKDIR /app
 # Copie o arquivo de dependências para o container
 COPY package*.json ./
 
-
 # Copie o restante do código para o container
 COPY . .
-
+RUN ls -lt
 # Instale as dependências
 RUN npm install
 
