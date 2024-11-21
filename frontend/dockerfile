@@ -1,26 +1,32 @@
 # Etapa de construção
 FROM node:18 AS build
 
+# Defina o diretório de trabalho para o frontend
 WORKDIR /app
 
-# Copia o package.json e instala as dependências
-COPY ./frontend/package*.json ./
+# Copia o package.json e o package-lock.json para o diretório de trabalho
+COPY frontend/package*.json ./
+
+# Instala as dependências do projeto
 RUN npm install
 
-# Copia o restante dos arquivos e gera a build
-COPY ./frontend ./
+# Copia o código-fonte do frontend para o contêiner
+COPY frontend/ ./
+
+# Executa o build da aplicação React
 RUN npm run build
 
-# Lista o conteúdo do diretório /app para garantir que o build tenha sido criado
+# Lista o conteúdo da pasta /app/build para garantir que o build foi gerado
 RUN ls -la /app/build
 
 # Etapa de produção
 FROM nginx:alpine
 
-# Copia os arquivos de build para o diretório do Nginx
+# Copia os arquivos de build do frontend para o diretório de arquivos estáticos do Nginx
 COPY --from=build /app/build /usr/share/nginx/html
 
 # Expondo a porta 8080
 EXPOSE 8080
 
+# Comando para iniciar o Nginx
 CMD ["nginx", "-g", "daemon off;"]
