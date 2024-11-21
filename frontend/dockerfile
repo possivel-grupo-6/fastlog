@@ -1,26 +1,32 @@
-# Use uma imagem oficial do Node.js como base para build
+# Use uma imagem oficial do Node.js como base para o build
 FROM node:18 AS build
 
 # Defina o diretório de trabalho no container
 WORKDIR /app
 
-# Copie o restante do código para o container
-COPY ./frontend .
-RUN ls -lt
+# Copie o código da aplicação para o container
+COPY ./frontend . 
+
 # Instale as dependências
 RUN npm install
 
 # Builda a aplicação para produção
 RUN npm run build
 
-# Use uma imagem Nginx para servir os arquivos estáticos
-FROM nginx:alpine
+# Use uma imagem do Node.js para a produção do Next.js
+FROM node:18 AS production
 
-# Copie os arquivos buildados para o diretório padrão do Nginx
-COPY --from=build /app /usr/share/nginx/html
+# Defina o diretório de trabalho para a produção
+WORKDIR /app
 
-# Exponha a porta 80
+# Copie o diretório buildado para o contêiner de produção
+COPY --from=build /app /app
+
+# Exponha a porta 3000 (padrão do Next.js)
 EXPOSE 8080
 
-# Comando para iniciar o servidor Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Defina a variável de ambiente para o ambiente de produção
+ENV NODE_ENV=production
+
+# Comando para iniciar o servidor Next.js
+CMD ["npm", "run", "start"]
