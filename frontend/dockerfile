@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Copie o restante do código para o container
-COPY . .
+COPY ./frontend .
 RUN ls -lt
 # Instale as dependências
 RUN npm install
