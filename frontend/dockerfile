@@ -13,11 +13,8 @@ RUN npm install
 # Copia o código-fonte do frontend para o contêiner
 COPY frontend/ ./
 
-# Executa o build da aplicação React
-RUN npm run build
-
-# Lista o conteúdo da pasta /app/build para garantir que o build foi gerado
-RUN ls -la /app/build
+# Executa o build da aplicação React e verifica os logs
+RUN npm run build || (echo "Erro ao executar npm run build" && exit 1)
 
 # Etapa de produção
 FROM nginx:alpine
