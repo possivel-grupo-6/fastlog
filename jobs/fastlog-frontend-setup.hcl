@@ -1,4 +1,4 @@
-job "meu-front-end" {
+job "fastlog-frontend" {
   type = "service"
 
   group "frontend-group" {
@@ -6,7 +6,7 @@ job "meu-front-end" {
 
     network {
       port "http" {
-        static = 8080  # Porta exposta para o frontend
+        static = 3000  # Porta exposta para o frontend
       }
     }
 
@@ -17,20 +17,17 @@ job "meu-front-end" {
     }
 
     task "frontend-task" {
-      template {
-        data        = <<EOH
-API_URL=http://api-backend-endpoint:4000
-NODE_ENV=production
-EOH
-        destination = "local/env.txt"
-        env         = true
-      }
-
       driver = "docker"
 
       config {
         image = "joaomiziaraspt/fastlog-frontend:latest"  # Substitua pela sua imagem
         ports = ["http"]
+      }
+
+      # Definindo variáveis de ambiente diretamente aqui
+      env {
+        NEXT_PUBLIC_API_URL = "http://fastlog-service:8000"
+        NODE_ENV            = "production"
       }
 
       resources {
@@ -40,4 +37,3 @@ EOH
     }
   }
 }
-

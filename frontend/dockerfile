@@ -17,7 +17,7 @@ COPY ./frontend .
 RUN npm run build
 
 # Exponha a porta do Next.js
-EXPOSE 8080
+EXPOSE 3000
 
 # Defina a variável de ambiente para a porta
 ENV HOST=0.0.0.0

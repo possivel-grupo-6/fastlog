@@ -14,7 +14,7 @@ function Home() {
     setStatus(null);
 
     try {
-      const response = await fetch(`http://fastlog-service:8000/?code=${trackingNumber}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/?code=${trackingNumber}`);
       const data = await response.json();
       if(data){
         setStatus(data);

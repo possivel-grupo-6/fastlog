@@ -1,21 +1,34 @@
-job "python-app" {
+job "fastlog-backend" {
   datacenters = ["dc1"]
   type = "service"
 
-  group "python-app-group" {
-    task "python-app-task" {
+  group "backend-group" {
+    network {
+      port "http" {
+        static = 8000  
+      }
+    }
+
+    task "backend-task" {
       driver = "docker"
 
       config {
-        image = "joaomiziaraspt/fastlog-backend:latest"  
-        port_map {
-          http = 8000
-        }
+        image = "joaomiziaraspt/fastlog-backend:latest"
+        ports = ["http"]  
+
+      }
+      env {
+        DB_USER     = "fastlog-user"
+        DB_PASSWORD = "fastlog-passwd"
+        DB_HOST     = "${NOMAD_IP_db}"  # IP da porta "db"
+        DB_PORT     = "${NOMAD_PORT_db}"  # Porta "db"
+        DB_NAME     = "fastlog"
       }
 
+
       resources {
-        cpu    = 500  # Quantidade de CPU (em MHz)
-        memory = 512  # Quantidade de memória (em MB)
+        cpu    = 500  
+        memory = 512  
       }
 
       env {
@@ -24,16 +37,8 @@ job "python-app" {
 
       service {
         name = "fastlog-service"
-        tags = ["http"]
         port = "http"
-        check {
-          name     = "HTTP Check"
-          type     = "http"
-          port     = "http"
-          path     = "/"
-          interval = "10s"
-          timeout  = "2s"
-        }
+        provider = "nomad"
       }
     }
   }
