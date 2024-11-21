@@ -1,11 +1,8 @@
 # Use uma imagem oficial do Node.js como base para build
-FROM node:16 AS build
+FROM node:18 AS build
 
 # Defina o diretório de trabalho no container
 WORKDIR /app
-
-# Copie o arquivo de dependências para o container
-COPY package*.json ./
 
 # Copie o restante do código para o container
 COPY ./frontend .
