@@ -5,7 +5,11 @@ job "fastlog-backend" {
   group "backend-group" {
     network {
       port "http" {
-        static = 8000  
+        static = 8000  # Porta da API
+      }
+
+      port "db" {
+        static = 3306  # Porta do MySQL
       }
     }
 
@@ -14,25 +18,20 @@ job "fastlog-backend" {
 
       config {
         image = "joaomiziaraspt/fastlog-backend:latest"
-        ports = ["http"]  
-
+        ports = ["http", "db"]  # Certifique-se de que a task conhece as portas
       }
-      env {
+
+      env = {
         DB_USER     = "fastlog-user"
         DB_PASSWORD = "fastlog-passwd"
-        DB_HOST     = "${NOMAD_IP_db}"  # IP da porta "db"
-        DB_PORT     = "${NOMAD_PORT_db}"  # Porta "db"
+        DB_HOST     = "${NOMAD_IP_db}"  # IP da task com a porta db
+        DB_PORT     = "${NOMAD_PORT_db}"  # Porta para acessar o MySQL
         DB_NAME     = "fastlog"
       }
 
-
       resources {
-        cpu    = 500  
-        memory = 512  
-      }
-
-      env {
-        PYTHONUNBUFFERED = "1"
+        cpu    = 500
+        memory = 512
       }
 
       service {
