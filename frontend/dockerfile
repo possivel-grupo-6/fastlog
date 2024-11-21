@@ -13,7 +13,6 @@ RUN npm run build
 # Etapa de produção
 FROM nginx:alpine
 
-RUN ls -lt 
 # Copia os arquivos de build para o diretório do Nginx
 COPY --from=build /app/build /usr/share/nginx/html
 
