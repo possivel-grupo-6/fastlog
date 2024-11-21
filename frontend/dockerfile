@@ -19,7 +19,7 @@ RUN npm run build || (echo "Erro ao executar npm run build" && exit 1)
 # Etapa de produção
 FROM nginx:alpine
 
-RUN ls -lt /app
+RUN ls -lt 
 
 
 # Copia os arquivos de build do frontend para o diretório de arquivos estáticos do Nginx
