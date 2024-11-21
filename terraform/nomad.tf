@@ -80,6 +80,51 @@ resource "aws_security_group" "nomad_ui_ingress" {
   }
 }
 
+resource "aws_security_group" "nomad_consul_sg" {
+  name = "nomad-consul-sg"
+  vpc_id = aws_vpc.nomad_vpc.id
+
+  ingress {
+    from_port   = 8300
+    to_port     = 8302
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"] # Internal communication
+  }
+
+  ingress {
+    from_port   = 8500
+    to_port     = 8500
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # Allow Consul UI access
+  }
+
+  ingress {
+    from_port   = 8600
+    to_port     = 8600
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port   = 8600
+    to_port     = 8600
+    protocol    = "udp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "nomad-consul-sg"
+  }
+}
+
+
 resource "aws_security_group" "ssh_ingress" {
   name   = "${var.name}-ssh-ingress"
   vpc_id = aws_vpc.nomad_vpc.id
@@ -361,6 +406,7 @@ resource "aws_instance" "client" {
     cloud_env                 = "aws"
     retry_join                = local.retry_join
     nomad_version             = var.nomad_version
+    consul_version            = var.consul_version
   })
 
   metadata_options {

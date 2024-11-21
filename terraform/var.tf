@@ -43,6 +43,10 @@ variable "nomad_version" {
   description = "The version of the Nomad binary to install."
   default     = "1.5.0"
 }
+variable "consul_version" {
+  description = "The version of the Nomad binary to install."
+  default     = "1.15.0"
+}
 variable "certificate" {
   description = "arn do certificado ACM"
   type        = string

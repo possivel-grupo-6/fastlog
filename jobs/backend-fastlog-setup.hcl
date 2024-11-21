@@ -1,13 +1,19 @@
-job "python-app" {
+job "fastlog-backend" {
   datacenters = ["dc1"]
   type = "service"
 
-  group "python-app-group" {
-    task "python-app-task" {
+  group "fastlog-backend-group" {
+    network {
+      port "http" {
+        static = 8000  # Porta exposta pelo container
+      }
+    }
+
+    task "fastlog-backend-task" {
       driver = "docker"
 
       config {
-        image = "joaomiziaraspt/fastlog-backend:latest"  
+        image = "joaomiziaraspt/fastlog-backend:latest"
         port_map {
           http = 8000
         }
@@ -23,7 +29,7 @@ job "python-app" {
       }
 
       service {
-        name = "fastlog-service"
+        name = "fastlog-backend-service"
         tags = ["http"]
         port = "http"
         check {
