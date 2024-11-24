@@ -66,6 +66,13 @@ resource "aws_security_group" "nomad_ui_ingress" {
   }
 
   ingress {
+    from_port       = 8500
+    to_port         = 8500
+    protocol        = "tcp"
+    cidr_blocks     = [var.allowlist_ip]
+  }
+
+  ingress {
     from_port = 0
     to_port   = 0
     protocol  = "-1"
@@ -139,6 +146,12 @@ resource "aws_security_group" "clients_ingress" {
   ingress {
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -235,6 +248,11 @@ resource "local_file" "tf_pem" {
   content = tls_private_key.private_key.private_key_pem
   file_permission = "0400"
 }
+resource "random_uuid" "nomad_id" {
+}
+
+resource "random_uuid" "nomad_token" {
+}
 
 resource "aws_instance" "server" {
   ami                    = data.aws_ami.ubuntu.id
@@ -290,6 +308,8 @@ resource "aws_instance" "server" {
     cloud_env                 = "aws"
     retry_join                = local.retry_join
     nomad_version             = var.nomad_version
+    nomad_consul_token_id     = random_uuid.nomad_id.result
+    nomad_consul_token_secret = random_uuid.nomad_token.result
   })
 
   metadata_options {
@@ -353,12 +373,13 @@ resource "aws_instance" "client" {
     source      = "../shared"
     destination = "/ops"
   }
-
   user_data = templatefile("../shared/data-scripts/user-data-client.sh", {
     region                    = var.region
     cloud_env                 = "aws"
     retry_join                = local.retry_join
     nomad_version             = var.nomad_version
+    nomad_consul_token_id     = random_uuid.nomad_id.result
+    nomad_consul_token_secret = random_uuid.nomad_token.result
   })
 
   metadata_options {
