@@ -1,7 +1,7 @@
 job "fastlog-frontend" {
   type = "service"
   meta {
-    version = "v8.0.0"
+    version = "v9.0.0"
   }
   group "frontend-group" {
     count = 1
