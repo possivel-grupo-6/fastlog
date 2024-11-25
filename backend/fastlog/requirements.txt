@@ -6,4 +6,3 @@ pandas
 sqlalchemy
 uvicorn
 pymysql
-mysqlclient
