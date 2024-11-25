@@ -14,7 +14,7 @@ function Home() {
     setStatus(null);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/?code=${trackingNumber}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/buy/?code=${trackingNumber}`);
       const data = await response.json();
       if(data){
         setStatus(data);
