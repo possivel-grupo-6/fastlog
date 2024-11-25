@@ -14,15 +14,7 @@ function Home() {
     setStatus(null);
 
     try {
-      const response = await fetch(`http://52.87.241.23:8000/buy/${trackingNumber}`,{
-        mode: 'no-cors',
-        method: "post",
-        headers: {
-             "Content-Type": "application/json"
-        },
-        body: JSON.stringify(ob)
-
-      });
+      const response = await fetch(`http://52.87.241.23:8000/buy/${trackingNumber}`);
       const data = await response.json();
       if(data){
         setStatus(data);
