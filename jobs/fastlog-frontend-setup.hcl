@@ -1,7 +1,7 @@
 job "fastlog-frontend" {
   type = "service"
   meta {
-    version = "v6.0.0"
+    version = "v8.0.0"
   }
   group "frontend-group" {
     count = 1
@@ -27,7 +27,7 @@ job "fastlog-frontend" {
       }
 
       env = {
-        NEXT_PUBLIC_API_URL="http://52.87.237.117:8000"
+        NEXT_PUBLIC_API_URL="http://52.87.241.23:8000"
         NODE_ENV="production"
       }
 
