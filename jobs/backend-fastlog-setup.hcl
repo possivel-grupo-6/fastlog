@@ -22,7 +22,7 @@ job "fastlog-backendv2" {
       env = {
         DB_USER="fastlog-user"
         DB_PASSWORD="fastlog-passwd"
-        DB_HOST="54.159.103.87" 
+        DB_HOST="18.234.140.87" 
         DB_PORT="3306"
         DB_NAME="fastlog"
       }

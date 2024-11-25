@@ -27,7 +27,7 @@ job "fastlog-frontend" {
       }
 
       env = {
-        NEXT_PUBLIC_API_URL="http://52.87.241.23:8000"
+        NEXT_PUBLIC_API_URL="http://54.167.113.239:8000"
         NODE_ENV="production"
       }
 
