@@ -2,7 +2,7 @@ job "fastlog-backendv2" {
   datacenters = ["dc1"]
   type = "service"
   meta {
-    version = "v15.0.0"
+    version = "v17.0.0"
   }
   group "backend-group" {
     network {
@@ -22,7 +22,7 @@ job "fastlog-backendv2" {
       env = {
         DB_USER="fastlog-user"
         DB_PASSWORD="fastlog-passwd"
-        DB_HOST="3.88.24.129" 
+        DB_HOST="52.87.241.23" 
         DB_PORT="3306"
         DB_NAME="fastlog"
       }

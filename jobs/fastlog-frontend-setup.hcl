@@ -1,10 +1,10 @@
 job "fastlog-frontend" {
   type = "service"
   meta {
-    version = "v13.0.0"
+    version = "v15.0.0"
   }
   group "frontend-group" {
-    count = 1
+    count = 2
 
     network {
       port "http" {

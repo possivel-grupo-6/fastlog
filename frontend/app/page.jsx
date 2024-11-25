@@ -14,7 +14,7 @@ function Home() {
     setStatus(null);
 
     try {
-      const response = await fetch(`http://54.204.59.0:8000/buy/${trackingNumber}`);
+      const response = await fetch(`http://3.88.24.129:8000/buy/${trackingNumber}`);
       const data = await response.json();
       if(data){
         setStatus(data);

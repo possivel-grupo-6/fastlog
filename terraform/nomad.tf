@@ -392,78 +392,85 @@ resource "aws_instance" "client" {
 # LB
 ####################################################################
 
-# resource "aws_lb" "nomad_lb" {
-#   name               = "nomad-lb"
-#   internal           = false
-#   load_balancer_type = "application"
-#   security_groups    = [aws_security_group.nomad_ui_ingress.id, aws_security_group.ssh_ingress.id, aws_security_group.clients_ingress.id, aws_security_group.allow_all_internal.id]
-#   subnets = [
-#     aws_subnet.nomad_subnet_1.id,
-#     aws_subnet.nomad_subnet_2.id,
-#     aws_subnet.nomad_subnet_3.id,
-#   ]
-# }
+resource "aws_lb" "nomad_lb" {
+  name               = "nomad-lb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.nomad_ui_ingress.id, aws_security_group.ssh_ingress.id, aws_security_group.clients_ingress.id, aws_security_group.allow_all_internal.id]
+  subnets            = [
+    aws_subnet.nomad_subnet_1.id,
+    aws_subnet.nomad_subnet_2.id,
+    aws_subnet.nomad_subnet_3.id,
+  ]
+}
 
-# resource "aws_lb_listener" "nomad_https" {
-#   load_balancer_arn = aws_lb.nomad_lb.arn
-#   port              = "443"
-#   protocol          = "HTTPS"
+# Listener HTTPS (porta 443)
+resource "aws_lb_listener" "nomad_https" {
+  load_balancer_arn = aws_lb.nomad_lb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08"
+  certificate_arn   = var.certificate
 
-#   ssl_policy      = "ELBSecurityPolicy-2016-08"
-#   certificate_arn = var.certificate
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.nomad.arn
+  }
+}
 
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.nomad.arn
-#   }
-# }
+# Listener HTTP (porta 80) redirecionando para HTTPS
+resource "aws_lb_listener" "http_listener" {
+  load_balancer_arn = aws_lb.nomad_lb.arn
+  port              = "80"
+  protocol          = "HTTP"
+  default_action {
+    type = "redirect"
+    redirect {
+      protocol    = "HTTPS"
+      port        = "443"
+      status_code = "HTTP_301"
+    }
+  }
+}
 
-# resource "aws_lb_listener" "http_listener" {
-#   load_balancer_arn = aws_lb.nomad_lb.arn
-#   port              = "80"
-#   protocol          = "HTTP"
-#   default_action {
-#     type = "redirect"
-#     redirect {
-#       protocol    = "HTTPS"
-#       port        = "443"
-#       status_code = "HTTP_301"
-#     }
-#   }
-# }
+# Target Group configurado para as instâncias clients
+resource "aws_lb_target_group" "nomad" {
+  name        = "nomad-tg"
+  port        = 3000        # Porta do front-end
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.nomad_vpc.id
+  target_type = "instance"
 
-# resource "aws_lb_target_group" "nomad" {
-#   name        = "nomad-tg"
-#   port        = 8200
-#   protocol    = "HTTP"
-#   vpc_id      = aws_vpc.nomad_vpc.id
-#   target_type = "instance"
+  health_check {
+    interval            = 30
+    path                = "/health"  # Ajuste o caminho do health check, caso necessário
+    protocol            = "HTTP"
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200-399"
+  }
+}
 
-#   health_check {
-#     interval            = 30
-#     path                = "/v1/sys/health"
-#     protocol            = "HTTP"
-#     timeout             = 5
-#     healthy_threshold   = 2
-#     unhealthy_threshold = 2
-#     matcher             = "200-399"
-#   }
-# }
+# Altere para usar as instâncias client em vez das server
+resource "aws_lb_target_group_attachment" "nomad_attachment" {
+  count            = var.client_count   # Usando a variável client_count, que deve ser configurada
+  target_group_arn = aws_lb_target_group.nomad.arn
+  target_id        = aws_instance.client[count.index].id  # Refere-se às instâncias client
+  port             = 3000  # A mesma porta configurada no target group
+}
 
-# resource "aws_lb_target_group_attachment" "nomad_attachment" {
-#   count            = var.server_count
-#   target_group_arn = aws_lb_target_group.nomad.arn
-#   target_id        = aws_instance.server[count.index].id
-#   port             = 4646
-# }
-# resource "aws_route53_record" "lb_dns_record" {
-#   zone_id = var.zone
-#   name    = "miziara.xyz"
-#   type    = "A"
+# Configurando o registro DNS no Route 53
+resource "aws_route53_record" "lb_dns_record" {
+  zone_id = var.zone
+  name    = "miziara.xyz"
+  type    = "A"
 
-#   alias {
-#     name                   = aws_lb.nomad_lb.dns_name
-#     zone_id                = aws_lb.nomad_lb.zone_id
-#     evaluate_target_health = true
-#   }
-# }
+  alias {
+    name                   = aws_lb.nomad_lb.dns_name
+    zone_id                = aws_lb.nomad_lb.zone_id
+    evaluate_target_health = true
+  }
+}
+
+
