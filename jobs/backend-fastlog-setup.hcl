@@ -24,8 +24,8 @@ job "fastlog-backend" {
       env = {
         DB_USER     = "fastlog-user"
         DB_PASSWORD = "fastlog-passwd"
-        DB_HOST     = "${NOMAD_IP_db}"  # IP da task com a porta db
-        DB_PORT     = "${NOMAD_PORT_db}"  # Porta para acessar o MySQL
+        DB_HOST     = "23.20.132.252"  # IP da task com a porta db
+        DB_PORT     = "3306"  # Porta para acessar o MySQL
         DB_NAME     = "fastlog"
       }
 
