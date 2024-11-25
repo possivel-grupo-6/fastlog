@@ -2,7 +2,7 @@ job "fastlog-backendv2" {
   datacenters = ["dc1"]
   type = "service"
   meta {
-    version = "v11.0.0"
+    version = "v12.0.0"
   }
   group "backend-group" {
     network {
