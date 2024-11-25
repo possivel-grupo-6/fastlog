@@ -1,6 +1,8 @@
 job "fastlog-frontend" {
   type = "service"
-
+  meta {
+    version = "v5.0.0"
+  }
   group "frontend-group" {
     count = 1
 
@@ -24,10 +26,9 @@ job "fastlog-frontend" {
         ports = ["http"]
       }
 
-      # Definindo variáveis de ambiente diretamente aqui
-      env {
-        NEXT_PUBLIC_API_URL = "http://fastlog-service:8000"
-        NODE_ENV            = "production"
+      env = {
+        NEXT_PUBLIC_API_URL="http://54.81.190.207:8000"
+        NODE_ENV="production"
       }
 
       resources {

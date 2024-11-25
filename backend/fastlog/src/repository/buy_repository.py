@@ -19,15 +19,16 @@ def delete_data():
 
 def get_buy(code: str):
     db = get_db()
-    query = f"SELECT * FROM buy WHERE code = {code};"
+    # Usar bind parameters para evitar SQL Injection e erros de consulta
+    query = "SELECT * FROM buy WHERE code = :code;"
     result = db.execute(text(query), {'code': code}).fetchone()
     if result:
         return {
-            'code': result[0], 
-            'price': result[1], 
-            'cpf': result[2], 
-            'product': result[3], 
-            'status': result[4]
+            'code': result['code'], 
+            'price': result['price'], 
+            'cpf': result['cpf'], 
+            'product': result['product'], 
+            'status': result['status']
         }
     else:
         return None

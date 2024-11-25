@@ -1,4 +1,4 @@
-job "fastlog-backend" {
+job "fastlog-backendv2" {
   datacenters = ["dc1"]
   type = "service"
 
