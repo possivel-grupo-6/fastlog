@@ -60,14 +60,20 @@ resource "aws_security_group" "nomad_ui_ingress" {
   # Nomad
   ingress {
     from_port       = 4646
-    to_port         = 4646
+    to_port         = 4648
     protocol        = "tcp"
     cidr_blocks     = [var.allowlist_ip]
   }
 
   ingress {
     from_port       = 8500
-    to_port         = 8500
+    to_port         = 8502
+    protocol        = "tcp"
+    cidr_blocks     = [var.allowlist_ip]
+  }
+  ingress {
+    from_port       = 8200
+    to_port         = 8502
     protocol        = "tcp"
     cidr_blocks     = [var.allowlist_ip]
   }
@@ -152,6 +158,12 @@ resource "aws_security_group" "clients_ingress" {
   ingress {
     from_port   = 8080
     to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  ingress {
+    from_port   = 8000
+    to_port     = 8000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -308,8 +320,9 @@ resource "aws_instance" "server" {
     cloud_env                 = "aws"
     retry_join                = local.retry_join
     nomad_version             = var.nomad_version
-    nomad_consul_token_id     = random_uuid.nomad_id.result
-    nomad_consul_token_secret = random_uuid.nomad_token.result
+    consul_token_id     = random_uuid.nomad_id.result
+    nomad_token_id = random_uuid.nomad_token.result
+
   })
 
   metadata_options {

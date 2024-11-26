@@ -23,8 +23,8 @@ CLOUD_ENV=${cloud_env}
 
 SERVER_COUNT=${server_count}
 RETRY_JOIN="${retry_join}"
-CONSUL_TOKEN=${nomad_consul_token_id}
-NOMAD_TOKEN=${nomad_consul_token_secret}
+NOMAD_TOKEN=${nomad_token_id}
+CONSUL_TOKEN=${consul_token_id}
 
 # Capturar o endereço IP local
 TOKEN=$(curl -X PUT "http://instance-data/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -66,7 +66,7 @@ sudo apt-get install -y openjdk-8-jdk
 JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
 
 # Configurar Nomad
-sed -i "s/CONSUL_TOKEN/$NOMAD_TOKEN/g" "$CONFIGDIR/nomad.hcl"
+sudo sed -i "s/CONSUL_TOKEN/$NOMAD_TOKEN/g" "$CONFIGDIR/nomad.hcl"
 sed -i "s/SERVER_COUNT/$SERVER_COUNT/g" "$CONFIGDIR/nomad.hcl"
 sed -i "s/RETRY_JOIN/$RETRY_JOIN/g" "$CONFIGDIR/nomad.hcl"
 sed -i "s/IP_ADDRESS/$IP_ADDRESS/g" "$CONFIGDIR/nomad.hcl"
@@ -77,7 +77,6 @@ sudo systemctl enable nomad.service
 sudo systemctl start nomad.service
 
 # Configurar Consul
-sed -i "s/CONSUL_TOKEN/$CONSUL_TOKEN/g" "$CONFIGDIR/consul.hcl"
 sed -i "s/SERVER_COUNT/$SERVER_COUNT/g" "$CONFIGDIR/consul.hcl"
 sed -i "s/RETRY_JOIN/$RETRY_JOIN/g" "$CONFIGDIR/consul.hcl"
 sed -i "s/IP_ADDRESS/$IP_ADDRESS/g" "$CONFIGDIR/consul.hcl"
@@ -87,31 +86,62 @@ sudo cp "$CONFIGDIR/consul.service" /etc/systemd/system/consul.service
 sudo systemctl enable consul.service
 sudo systemctl start consul.service
 
-# Criar política e token para integração Nomad + Consul
+# CONSUL BOOTSTRAP
+cd ~/
+bootstrap_output=$(consul acl bootstrap -format=json)
+management_token=$(echo "$bootstrap_output" | jq -r '.SecretID')
+export CONSUL_HTTP_TOKEN=$management_token
+
+cat > consul-secrets.token <<EOL
+echo $bootstrap_output
+echo $management_token
+EOL
+
 cat > nomad-policy.hcl <<EOL
-node_prefix "" {
+agent_prefix "" {
   policy = "write"
 }
 
+node_prefix "" {
+  policy = "read"
+}
+
 service_prefix "" {
-  policy = "read"
+  policy = "write"
 }
 
-agent_prefix "" {
-  policy = "read"
-}
-
-session_prefix "" {
+key_prefix "nomad/" {
   policy = "write"
 }
 EOL
 
-# Aplicar política no Consul
-consul acl policy create -name "nomad-policy" -rules @nomad-policy.hcl -token "$CONSUL_TOKEN"
+consul acl policy create -name "nomad-policy" -rules @nomad-policy.hcl
+consul acl token create -description "Token do Nomad" -policy-name "nomad-policy" -secret "$NOMAD_TOKEN"
 
-# Criar token específico para Nomad
-consul acl token create -description "Nomad Integration Token" -policy-name "nomad-policy" -token "$CONSUL_TOKEN" > /dev/null
+cat > admin-policy.hcl <<EOL
+agent_prefix "" {
+  policy = "write"
+}
+
+node_prefix "" {
+  policy = "read"
+}
+
+service_prefix "" {
+  policy = "write"
+}
+
+key_prefix "nomad/" {
+  policy = "write"
+}
+EOL
+
+consul acl policy create -name "admin-policy" -rules @admin-policy.hcl
+
+consul acl token create -description "Token de acesso" -policy-name "admin-policy" -secret "$CONSUL_TOKEN"
+
 sudo systemctl restart consul
+sudo systemctl restart nomad
 
 # Adicionar IP ao /etc/hosts
 echo "127.0.0.1 $(hostname)" | sudo tee --append /etc/hosts
