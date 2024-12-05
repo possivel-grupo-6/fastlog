@@ -14,7 +14,7 @@ NOMAD_VERSION=${nomad_version}
 NOMAD_DOWNLOAD="https://releases.hashicorp.com/nomad/$${NOMAD_VERSION}/nomad_$${NOMAD_VERSION}_linux_amd64.zip"
 NOMAD_CONFIG_DIR="/etc/nomad.d"
 NOMAD_DIR="/opt/nomad"
-CONSUL_VERSION="1.16.1"
+CONSUL_VERSION="1.20.1"
 CONSUL_DOWNLOAD="https://releases.hashicorp.com/consul/$${CONSUL_VERSION}/consul_$${CONSUL_VERSION}_linux_amd64.zip"
 CONSUL_CONFIG_DIR="/etc/consul.d"
 CONSUL_DIR="/opt/consul"
@@ -45,7 +45,7 @@ sudo chmod 755 "$NOMAD_CONFIG_DIR" "$NOMAD_DIR"
 
 # Baixar e instalar Consul
 curl -L "$CONSUL_DOWNLOAD" > consul.zip
-sudo unzip consul.zip -d /usr/local/bin
+sudo unzip -o consul.zip -d /usr/local/bin
 sudo chmod 0755 /usr/local/bin/consul
 sudo mkdir -p "$CONSUL_CONFIG_DIR" "$CONSUL_DIR"
 sudo chmod 755 "$CONSUL_CONFIG_DIR" "$CONSUL_DIR"
@@ -58,12 +58,6 @@ sudo apt-get update
 sudo apt-get install -y docker-ce
 sudo systemctl enable docker
 sudo systemctl start docker
-
-# Instalar Java
-sudo add-apt-repository -y ppa:openjdk-r/ppa
-sudo apt-get update
-sudo apt-get install -y openjdk-8-jdk
-JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
 
 # Configurar Nomad
 sudo sed -i "s/CONSUL_TOKEN/$NOMAD_TOKEN/g" "$CONFIGDIR/nomad.hcl"
@@ -80,68 +74,12 @@ sudo systemctl start nomad.service
 sed -i "s/SERVER_COUNT/$SERVER_COUNT/g" "$CONFIGDIR/consul.hcl"
 sed -i "s/RETRY_JOIN/$RETRY_JOIN/g" "$CONFIGDIR/consul.hcl"
 sed -i "s/IP_ADDRESS/$IP_ADDRESS/g" "$CONFIGDIR/consul.hcl"
+sed -i "s/CONSUL_TOKEN/$CONSUL_TOKEN/g" "$CONFIGDIR/consul.hcl"
 sudo cp "$CONFIGDIR/consul.hcl" "$CONSUL_CONFIG_DIR"
 sudo cp "$CONFIGDIR/consul.service" /etc/systemd/system/consul.service
 
 sudo systemctl enable consul.service
 sudo systemctl start consul.service
-
-# CONSUL BOOTSTRAP
-cd ~/
-bootstrap_output=$(consul acl bootstrap -format=json)
-management_token=$(echo "$bootstrap_output" | jq -r '.SecretID')
-export CONSUL_HTTP_TOKEN=$management_token
-
-cat > consul-secrets.token <<EOL
-echo $bootstrap_output
-echo $management_token
-EOL
-
-cat > nomad-policy.hcl <<EOL
-agent_prefix "" {
-  policy = "write"
-}
-
-node_prefix "" {
-  policy = "read"
-}
-
-service_prefix "" {
-  policy = "write"
-}
-
-key_prefix "nomad/" {
-  policy = "write"
-}
-EOL
-
-consul acl policy create -name "nomad-policy" -rules @nomad-policy.hcl
-consul acl token create -description "Token do Nomad" -policy-name "nomad-policy" -secret "$NOMAD_TOKEN"
-
-cat > admin-policy.hcl <<EOL
-agent_prefix "" {
-  policy = "write"
-}
-
-node_prefix "" {
-  policy = "read"
-}
-
-service_prefix "" {
-  policy = "write"
-}
-
-key_prefix "nomad/" {
-  policy = "write"
-}
-EOL
-
-consul acl policy create -name "admin-policy" -rules @admin-policy.hcl
-
-consul acl token create -description "Token de acesso" -policy-name "admin-policy" -secret "$CONSUL_TOKEN"
-
-sudo systemctl restart consul
-sudo systemctl restart nomad
 
 # Adicionar IP ao /etc/hosts
 echo "127.0.0.1 $(hostname)" | sudo tee --append /etc/hosts
@@ -149,7 +87,106 @@ echo "127.0.0.1 $(hostname)" | sudo tee --append /etc/hosts
 # Configurar variáveis de ambiente
 echo "export NOMAD_ADDR=http://$IP_ADDRESS:4646" | sudo tee --append "/home/$HOME_DIR/.bashrc"
 echo "export CONSUL_ADDR=http://$IP_ADDRESS:8500" | sudo tee --append "/home/$HOME_DIR/.bashrc"
-echo "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre" | sudo tee --append "/home/$HOME_DIR/.bashrc"
+
+sleep 60
+
+# CONSUL BOOTSTRAP
+cd ~/
+bootstrap_output=$(consul acl bootstrap -format=json)
+management_token=$(echo "$bootstrap_output" | jq -r '.SecretID')
+export CONSUL_HTTP_TOKEN=$management_token
+echo $management_token
+echo $bootstrap_output
+
+cat > nomad-policy.hcl <<EOL
+agent_prefix "" {
+  policy = "read"
+}
+
+node_prefix "" {
+  policy = "write"
+}
+
+service_prefix "" {
+  policy = "write"
+}
+
+key_prefix "" {
+  policy = "write"
+}
+check_prefix "" {
+  policy = "write"
+}
+
+acl  = "write"
+mesh = "write"
+EOL
+
+consul acl policy create -name "nomad-policy" -rules @nomad-policy.hcl
+consul acl token create -description "Token do Nomad" -policy-name "nomad-policy" -secret "$NOMAD_TOKEN"
+
+cat > admin-policy.hcl <<EOL
+
+node_prefix "" {
+  policy = "write"
+}
+
+service_prefix "" {
+  policy = "write"
+}
+
+key_prefix "" {
+  policy = "write"
+}
+
+agent_prefix "" {
+  policy = "write"
+}
+
+session_prefix "" {
+  policy = "write"
+}
+
+query_prefix "" {
+  policy = "write"
+}
+
+acl = "write"
+
+EOL
+
+consul acl policy create -name "admin-policy" -rules @admin-policy.hcl
+
+consul acl token create -description "Token de admin" -policy-name "admin-policy" -secret "$CONSUL_TOKEN"
+
+# config do dns
+
+CONFIG_DIR="/etc/systemd/resolved.conf.d"
+CONFIG_FILE="$CONFIG_DIR/consul.conf"
+
+if [ ! -d "$CONFIG_DIR" ]; then
+  echo "Criando diretório $CONFIG_DIR..."
+  sudo mkdir -p "$CONFIG_DIR"
+fi
+
+echo "Adicionando configurações ao arquivo $CONFIG_FILE..."
+sudo bash -c "cat > $CONFIG_FILE <<EOF
+[Resolve]
+DNS=127.0.0.1:8600
+DNSSEC=false
+Domains=~consul
+EOF
+"
+
+echo "Reiniciando o serviço systemd-resolved..."
+sudo systemctl restart systemd-resolved
+
+echo "Verificando configurações aplicadas..."
+resolvectl status | grep -A 5 "DNS Servers" || echo "Verificação falhou. Confirme as configurações manualmente."
+
+
+sudo systemctl restart consul
+sudo systemctl restart nomad
 
 # Verificar status dos serviços
 for service in nomad consul; do

@@ -3,11 +3,11 @@ output "nomad_ip" {
 }
 
 output "consul_token_secret" {
-  value = random_uuid.nomad_token.result
+  value = random_uuid.Consul_token.result
 }
 
 output "nomad_token_secret" {
-  value = random_uuid.nomad_id.result
+  value = random_uuid.nomad_token.result
 }
 output "IP_Addresses" {
   value = <<CONFIGURATION
@@ -22,13 +22,19 @@ Set the Nomad address, run the bootstrap, export the management token, set the t
 export NOMAD_ADDR=http://${aws_instance.server[0].public_ip}:4646 && \
 nomad acl bootstrap | grep -i secret | awk -F "=" '{print $2}' | xargs > nomad-management.token && \
 export NOMAD_TOKEN=$(cat nomad-management.token) && \
-nomad server members
+nomad server members && \
+nomad ui -authenticate
 '
+
 Copy the token value and use it to log in to the UI:
 
 cat nomad-management.token
 
 The Consul UI can be accessed at http://${aws_instance.server[0].public_ip}:8500/ui
-with the token: ${random_uuid.nomad_token.result}
+with the token: ${random_uuid.Consul_token.result}
+
+export CONSUL_HTTP_ADDR=http://${aws_instance.server[0].public_ip}:8500 && \
+export CONSUL_HTTP_TOKEN=${random_uuid.Consul_token.result}
+
 CONFIGURATION
 }

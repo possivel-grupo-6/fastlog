@@ -28,5 +28,8 @@ client {
 }
 consul {
   address = "127.0.0.1:8500"
+  client_service_name = "nomad-client"
+  server_service_name = "nomad-server"
+  auto_advertise = true
   token = "CONSUL_TOKEN"
 }

@@ -12,12 +12,6 @@ job "fastlog-frontend" {
       }
     }
 
-    service {
-      name     = "frontend-service"
-      port     = "http"
-      provider = "nomad"
-    }
-
     task "frontend-task" {
       driver = "docker"
 
@@ -35,6 +29,20 @@ job "fastlog-frontend" {
         cpu    = 500  # Altere conforme necessário
         memory = 256  # Altere conforme necessário
       }
+  }
+  
+  service {
+    name = "fastlog-frontend"   # Nome do serviço no Consul
+    port = "http"              # Porta que será registrada no Consul
+    tags = ["frontend"]  # Tags para identificação no Consul
+
+    check {
+      name     = "HTTP Health Check"
+      type     = "http"
+      path     = "/"     # Endpoint de health check do backend
+      interval = "10s"         # Frequência das verificações
+      timeout  = "2s"          # Tempo de timeout da verificação
     }
+  }
   }
 }

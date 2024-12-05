@@ -41,7 +41,7 @@ variable "root_block_device_size" {
 
 variable "nomad_version" {
   description = "The version of the Nomad binary to install."
-  default     = "1.5.0"
+  default     = "1.9.3"
 }
 variable "certificate" {
   description = "arn do certificado ACM"

@@ -15,6 +15,10 @@ app.add_middleware(
 # Definição do Router
 app_endpoint = APIRouter()
 
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+    
 @app_endpoint.get("/buy/{code}")
 async def get_buy(code: str):
     return get_buy_by_code(code)

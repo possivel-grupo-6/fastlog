@@ -2,6 +2,7 @@ data_dir = "/opt/consul/data"
 bind_addr = "0.0.0.0"
 client_addr = "0.0.0.0"
 advertise_addr = "IP_ADDRESS"
+datacenter = "dc1"
 
 bootstrap_expect = SERVER_COUNT
 
@@ -9,7 +10,13 @@ acl {
     enabled = true
     default_policy = "deny"
     down_policy = "extend-cache"
+    tokens {
+      agent = "CONSUL_TOKEN"
+      default = "CONSUL_TOKEN"  
+  }
 }
+
+recursors = ["8.8.8.8"]
 
 log_level = "INFO"
 
@@ -27,4 +34,5 @@ connect {
 
 ports {
   grpc = 8502
+  dns = 8600
 }

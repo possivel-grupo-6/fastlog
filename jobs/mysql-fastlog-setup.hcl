@@ -14,24 +14,33 @@ job "mysql" {
 
       config {
         image = "mysql:8.0"  
-        ports = ["db"]      
+        ports = ["db"]       
       }
-        env = {
-          MYSQL_ROOT_PASSWORD = "urubu100"  
-          MYSQL_DATABASE = "fastlog"        
-          MYSQL_USER = "fastlog-user"                
-          MYSQL_PASSWORD = "fastlog-passwd"        
-        }
+
+      env = {
+        MYSQL_ROOT_PASSWORD = "urubu100"  
+        MYSQL_DATABASE = "fastlog"        
+        MYSQL_USER = "fastlog-user"       
+        MYSQL_PASSWORD = "fastlog-passwd" 
+      }
 
       resources {
         cpu    = 500  
-        memory = 512 
+        memory = 512  
       }
 
       service {
-        name = "mysql-service"
-        port = "db"
-        provider = "nomad"
+        name = "fastlog-mysql"   
+        port = "db"              
+        tags = ["mysql", "db"]   
+        provider = "consul"      
+
+        check {
+          name     = "MySQL TCP Check"
+          type     = "tcp"
+          interval = "10s"       
+          timeout  = "2s"        
+        }
       }
     }
   }

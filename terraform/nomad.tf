@@ -73,7 +73,13 @@ resource "aws_security_group" "nomad_ui_ingress" {
   }
   ingress {
     from_port       = 8200
-    to_port         = 8502
+    to_port         = 8202
+    protocol        = "tcp"
+    cidr_blocks     = [var.allowlist_ip]
+  }
+  ingress {
+    from_port       = 8600
+    to_port         = 8602
     protocol        = "tcp"
     cidr_blocks     = [var.allowlist_ip]
   }
@@ -260,7 +266,7 @@ resource "local_file" "tf_pem" {
   content = tls_private_key.private_key.private_key_pem
   file_permission = "0400"
 }
-resource "random_uuid" "nomad_id" {
+resource "random_uuid" "Consul_token" {
 }
 
 resource "random_uuid" "nomad_token" {
@@ -320,8 +326,8 @@ resource "aws_instance" "server" {
     cloud_env                 = "aws"
     retry_join                = local.retry_join
     nomad_version             = var.nomad_version
-    consul_token_id     = random_uuid.nomad_id.result
-    nomad_token_id = random_uuid.nomad_token.result
+    consul_token_id           = random_uuid.Consul_token.result
+    nomad_token_id            = random_uuid.nomad_token.result
 
   })
 
@@ -391,8 +397,8 @@ resource "aws_instance" "client" {
     cloud_env                 = "aws"
     retry_join                = local.retry_join
     nomad_version             = var.nomad_version
-    nomad_consul_token_id     = random_uuid.nomad_id.result
-    nomad_consul_token_secret = random_uuid.nomad_token.result
+    consul_token_id           = random_uuid.Consul_token.result
+    nomad_token_id            = random_uuid.nomad_token.result
   })
 
   metadata_options {

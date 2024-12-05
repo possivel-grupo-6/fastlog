@@ -3,15 +3,17 @@
 set -e
 
 # Configuração para saída de logs do user-data
-exec > >(sudo tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
+exec > >(sudo tee /var/log/user-data.log |logger -t user-data -s 2>/dev/console) 2>&1
 
 # Variáveis de Configuração
 NOMAD_VERSION=${nomad_version}
 NOMAD_DOWNLOAD="https://releases.hashicorp.com/nomad/$${NOMAD_VERSION}/nomad_$${NOMAD_VERSION}_linux_amd64.zip"
 NOMAD_CONFIG_DIR="/etc/nomad.d"
-CONSULVERSION="1.16.0"
+CONSULVERSION="1.20.1"
 CONSUL_DOWNLOAD="https://releases.hashicorp.com/consul/$${CONSULVERSION}/consul_$${CONSULVERSION}_linux_amd64.zip"
 CONFIG_DIR="/ops/shared/config"
+NOMAD_TOKEN=${nomad_token_id}
+CONSUL_TOKEN=${consul_token_id}
 
 # Instala dependências iniciais
 sudo apt-get update
@@ -31,7 +33,7 @@ sudo chmod 755 $NOMAD_CONFIG_DIR
 
 # Baixa e instala o Consul
 curl -L $CONSUL_DOWNLOAD > consul.zip
-sudo unzip consul.zip -d /usr/local/bin
+sudo unzip -o consul.zip -d /usr/local/bin
 sudo chmod 0755 /usr/local/bin/consul
 sudo chown root:root /usr/local/bin/consul
 sudo mkdir -p /etc/consul.d
@@ -41,12 +43,14 @@ sudo chmod 755 /etc/consul.d
 RETRY_JOIN="provider=aws tag_key=NomadJoinTag tag_value=auto-join"
 
 # Substitui as variáveis no arquivo de configuração do Nomad
-sed -i "s/CONSUL_TOKEN/${nomad_consul_token_secret}/g" $CONFIG_DIR/nomad_client.hcl
-sed -i "s/CONSUL_TOKEN/${nomad_consul_token_id}/g" $CONFIG_DIR/consul_client.hcl
+sed -i "s/CONSUL_TOKEN/$NOMAD_TOKEN/g" $CONFIG_DIR/nomad_client.hcl
 sed -i "s/IP_ADDRESS/$IP_ADDRESS/g" $CONFIG_DIR/nomad_client.hcl
 sed -i "s/RETRY_JOIN/$RETRY_JOIN/g" $CONFIG_DIR/nomad_client.hcl
+
 sed -i "s/IP_ADDRESS/$IP_ADDRESS/g" $CONFIG_DIR/consul_client.hcl
-sed -i "s/CONSUL_RETRY_JOIN/$CONSUL_RETRY_JOIN/g" $CONFIG_DIR/consul_client.hcl
+sed -i "s/CONSUL_TOKEN/$CONSUL_TOKEN/g" $CONFIG_DIR/consul_client.hcl
+sed -i "s/CONSUL_RETRY_JOIN/$RETRY_JOIN/g" $CONFIG_DIR/consul_client.hcl
+
 sudo cp $CONFIG_DIR/consul_client.hcl /etc/consul.d/consul.hcl
 sudo mkdir -p /opt/nomad/data
 sudo chmod 755 /opt/nomad/data
@@ -85,15 +89,34 @@ sudo apt-get install -y docker-ce
 sudo systemctl enable docker
 sudo systemctl start docker
 
-# Instalar Java (OpenJDK 8)
-sudo add-apt-repository -y ppa:openjdk-r/ppa
-sudo apt-get update
-sudo apt-get install -y openjdk-8-jdk
-JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
+# config do dns
+
+CONFIG_DIR="/etc/systemd/resolved.conf.d"
+CONFIG_FILE="$CONFIG_DIR/consul.conf"
+
+if [ ! -d "$CONFIG_DIR" ]; then
+  echo "Criando diretório $CONFIG_DIR..."
+  sudo mkdir -p "$CONFIG_DIR"
+fi
+
+echo "Adicionando configurações ao arquivo $CONFIG_FILE..."
+sudo bash -c "cat > $CONFIG_FILE <<EOF
+[Resolve]
+DNS=127.0.0.1:8600
+DNSSEC=false
+Domains=~consul
+EOF
+"
+
+echo "Reiniciando o serviço systemd-resolved..."
+sudo systemctl restart systemd-resolved
+
+echo "Verificando configurações aplicadas..."
+resolvectl status | grep -A 5 "DNS Servers" || echo "Verificação falhou. Confirme as configurações manualmente."
+
 
 # Configura a variável de ambiente para o Nomad
 echo "export NOMAD_ADDR=http://$IP_ADDRESS:4646" | sudo tee --append /home/ubuntu/.bashrc
-echo "export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64" | sudo tee --append /home/ubuntu/.bashrc 
 
 # Configuração final do servidor
 echo "Configuração completa! Nomad, Docker e Java foram instalados com sucesso."

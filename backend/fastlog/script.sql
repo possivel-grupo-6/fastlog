@@ -1,4 +1,3 @@
-create database fastlog;
 use fastlog;
 
 CREATE TABLE buy (
