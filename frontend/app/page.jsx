@@ -16,7 +16,7 @@ function Home() {
     setStatus(null);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/buy/${trackingNumber}`);
+      const response = await fetch(`http://${API_BASE_URL}/buy/${trackingNumber}`);
       const data = await response.json();
       if(data){
         setStatus(data);
