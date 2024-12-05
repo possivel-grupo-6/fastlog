@@ -15,7 +15,7 @@ app.add_middleware(
 # Definição do Router
 app_endpoint = APIRouter()
 
-@app.get("/health")
+@app_endpoint.get("/health")
 def health():
     return {"status": "healthy"}
     

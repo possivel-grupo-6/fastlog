@@ -1,7 +1,9 @@
 job "fastlog-backend" {
   datacenters = ["dc1"]
   type = "service"
-
+  meta {
+    version = "v1.0.0"
+  }
   group "backend-group" {
     count = 1  # Número de instâncias do backend
 
