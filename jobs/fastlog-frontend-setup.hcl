@@ -8,7 +8,7 @@ job "fastlog-frontend" {
 
     network {
       port "http" {
-        static = 3000  # Porta exposta para o frontend
+        static = 3000  
       }
     }
 
@@ -16,32 +16,34 @@ job "fastlog-frontend" {
       driver = "docker"
 
       config {
-        image = "joaomiziaraspt/fastlog-frontend:latest"  # Substitua pela sua imagem
+        image = "joaomiziaraspt/fastlog-frontend:latest"  
         ports = ["http"]
       }
-
-      env = {
-        NEXT_PUBLIC_API_URL="http://54.167.113.239:8000"
-        NODE_ENV="production"
+      template {
+        data = <<EOF
+{{- with service "fastlog-backend" }}
+NEXT_PUBLIC_API_URL={{ (index . 0).Address }}
+EOF
+        destination = "local/env"  
+        env         = true         
       }
-
       resources {
-        cpu    = 500  # Altere conforme necessário
-        memory = 256  # Altere conforme necessário
+        cpu    = 500  
+        memory = 256  
       }
   }
   
   service {
-    name = "fastlog-frontend"   # Nome do serviço no Consul
-    port = "http"              # Porta que será registrada no Consul
-    tags = ["frontend"]  # Tags para identificação no Consul
+    name = "fastlog-frontend"  
+    port = "http"             
+    tags = ["frontend"] 
 
     check {
       name     = "HTTP Health Check"
       type     = "http"
-      path     = "/"     # Endpoint de health check do backend
-      interval = "10s"         # Frequência das verificações
-      timeout  = "2s"          # Tempo de timeout da verificação
+      path     = "/"    
+      interval = "10s"         
+      timeout  = "2s"        
     }
   }
   }

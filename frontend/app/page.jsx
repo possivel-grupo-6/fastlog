@@ -8,13 +8,15 @@ function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
   const handleTrack = async () => {
     setLoading(true);
     setError(null);
     setStatus(null);
 
     try {
-      const response = await fetch(`http://54.83.117.156:8000/buy/${trackingNumber}`);
+      const response = await fetch(`${API_BASE_URL}/buy/${trackingNumber}`);
       const data = await response.json();
       if(data){
         setStatus(data);
