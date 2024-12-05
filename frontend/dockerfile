@@ -1,26 +1,17 @@
-# Escolha a imagem base
 FROM node:18-alpine AS builder
 
-# Crie o diretório para o app
 WORKDIR /app
 
-# Copie o package.json e o package-lock.json
 COPY ./frontend/package*.json ./
 
-# Instale as dependências
 RUN npm install
 
-# Copie o restante do código
 COPY ./frontend .
 
-# Compile a aplicação
 RUN npm run build
 
-# Exponha a porta do Next.js
 EXPOSE 3000
 
-# Defina a variável de ambiente para a porta
 ENV HOST=0.0.0.0
 
-# Comando para iniciar a aplicação
 CMD ["npm", "run", "start"]

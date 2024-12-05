@@ -23,6 +23,7 @@ job "fastlog-frontend" {
         data = <<EOF
 {{- with service "fastlog-backend" }}
 NEXT_PUBLIC_API_URL={{ (index . 0).Address }}
+{{ end }}
 EOF
         destination = "local/env"  
         env         = true         
